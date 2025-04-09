@@ -1,0 +1,7 @@
+https://github.com/digitalchild/cursor-best-practices?tab=readme-ov-file
+
+See the docs folder for system documentation
+
+- i want to run all things in my local k8s server 
+
+./setup-registry.sh 
