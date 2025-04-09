@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"apm/internal/db"
+	"apm/internal/db/repository"
 )
 
 // Services holds all service instances
@@ -26,50 +27,29 @@ type Services struct {
 
 // NewServices creates a new services manager
 func NewServices(db *db.Database, logger *log.Logger) *Services {
-	// Return a placeholder implementation
-	// In the actual implementation, you would initialize each service with its repository
+	// Instantiate repositories needed by services
+	softwareRepo := repository.NewPostgresSoftwareRepository(db.Pool)
+	// userRepo := repository.NewPostgresUserRepository(db.Pool)
+	// ... instantiate other repos ...
+
+	// TODO: Uncomment and implement other service initializations as needed
 	return &Services{
-		// Initialize each service with its repository
-		// User service would be implemented first
-		// UserService: NewUserService(db.UserRepo, logger),
+		// UserService: NewUserService(userRepo, logger),
+		// UserGroupService: NewUserGroupService(userRepo, logger),
+		// StakeholderService: NewStakeholderService(stakeholderRepo, logger),
+		// EntityService: NewEntityService(entityRepo, logger),
 
-		// Initialize user group service
-		// UserGroupService: NewUserGroupService(db.UserGroupRepo, logger),
+		// Initialize software service with the repository instance
+		SoftwareService: NewSoftwareService(softwareRepo, logger),
 
-		// Initialize stakeholder service
-		// StakeholderService: NewStakeholderService(db.StakeholderRepo, logger),
-
-		// Initialize entity service
-		// EntityService: NewEntityService(db.EntityRepo, logger),
-
-		// Initialize software service
-		// SoftwareService: NewSoftwareService(db.SoftwareRepo, logger),
-
-		// Initialize functional category service
-		// FunctionalCategoryService: NewFunctionalCategoryService(db.FunctionalCategoryRepo, logger),
-
-		// Initialize software group service
-		// SoftwareGroupService: NewSoftwareGroupService(db.SoftwareGroupRepo, logger),
-
-		// Initialize status service
-		// StatusService: NewStatusService(db.StatusRepo, logger),
-
-		// Initialize status log service
-		// StatusLogService: NewStatusLogService(db.StatusLogRepo, logger),
-
-		// Initialize rank service
-		// RankService: NewRankService(db.RankRepo, logger),
-
-		// Initialize news article service
-		// NewsArticleService: NewNewsArticleService(db.NewsArticleRepo, logger),
-
-		// Initialize media service
-		// MediaService: NewMediaService(db.MediaRepo, logger),
-
-		// Initialize product documentation service
-		// ProductDocumentationService: NewProductDocumentationService(db.ProductDocumentationRepo, logger),
-
-		// Initialize log service
-		// LogService: NewLogService(db.LogRepo, logger),
+		// FunctionalCategoryService: NewFunctionalCategoryService(functionalCategoryRepo, logger),
+		// SoftwareGroupService: NewSoftwareGroupService(softwareGroupRepo, logger),
+		// StatusService: NewStatusService(statusRepo, logger),
+		// StatusLogService: NewStatusLogService(statusLogRepo, logger),
+		// RankService: NewRankService(rankRepo, logger),
+		// NewsArticleService: NewNewsArticleService(newsArticleRepo, logger),
+		// MediaService: NewMediaService(mediaRepo, logger),
+		// ProductDocumentationService: NewProductDocumentationService(productDocumentationRepo, logger),
+		// LogService: NewLogService(logRepo, logger),
 	}
 }

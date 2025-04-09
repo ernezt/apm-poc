@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import Login from './pages/Login';
+import ApplicationOverview from './pages/ApplicationOverview';
 
 // Create a theme instance
 const theme = createTheme({
@@ -53,7 +54,8 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/applications" element={<ApplicationOverview />} />
+          <Route path="/" element={<Navigate to="/applications" replace />} />
         </Routes>
       </Router>
     </ThemeProvider>
