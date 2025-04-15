@@ -1,64 +1,20 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import Login from './pages/Login';
-import ApplicationOverview from './pages/ApplicationOverview';
-
-// Create a theme instance
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#2563eb', // Blue-600
-      light: '#3b82f6',
-      dark: '#1d4ed8',
-    },
-    secondary: {
-      main: '#64748b', // Slate-500
-    },
-    background: {
-      default: '#f8fafc', // Slate-50
-      paper: '#ffffff',
-    },
-  },
-  typography: {
-    fontFamily: '"Inter", "Helvetica", "Arial", sans-serif',
-    h4: {
-      fontWeight: 600,
-    },
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          textTransform: 'none',
-          fontWeight: 500,
-        },
-      },
-    },
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 8,
-          },
-        },
-      },
-    },
-  },
-});
+import ApplicationsOverview from './pages/ApplicationsOverview';
+import ApplicationDetail from './pages/ApplicationDetail';
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router>
+    <Router>
+      <div className="min-h-screen bg-base-200">
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/applications" element={<ApplicationOverview />} />
+          <Route path="/applications" element={<ApplicationsOverview />} />
+          <Route path="/applications/:id" element={<ApplicationDetail />} />
           <Route path="/" element={<Navigate to="/applications" replace />} />
         </Routes>
-      </Router>
-    </ThemeProvider>
+      </div>
+    </Router>
   );
 }
 

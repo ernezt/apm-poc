@@ -18,6 +18,7 @@ interface Software {
   implementation_status?: string;
   created_at: string; // Assuming ISO string format from backend
   updated_at: string;
+  rating?: number; // Added for star rating
 }
 
 // Define structure for the new software form data based on models.CreateSoftwareRequest
@@ -228,260 +229,343 @@ const ApplicationOverview: React.FC = () => {
   };
 
   return (
-    <div className="application-overview-container">
-       {/* Optional: Display loading indicator */} 
-       {isLoading && <div className="loading-indicator">Loading...</div>}
-       {/* Optional: Display error message */} 
-       {error && <div className="error-message">Error: {error}</div>} 
-
-      <div className="header">
-        <h1>Software Portfolio</h1>
-        <button className="add-button" onClick={handleOpenModal} disabled={isLoading}>Add New Software</button>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            {/* Updated table headers based on Software model */}
-            <th>Display Name</th>
-            <th>Description</th>
-            <th>Type</th>
-            <th>Vendor</th>
-            <th>Created At</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {/* Display loading/error directly in the table body if preferred */} 
-          {isLoading && !softwareList.length && (
-             <tr><td colSpan={6} style={{ textAlign: 'center' }}>Loading software...</td></tr>
-          )}
-          {!isLoading && error && !softwareList.length && (
-            <tr><td colSpan={6} style={{ textAlign: 'center' }} className="error-message">Failed to load software: {error}</td></tr>
-          )}
-          {!isLoading && !error && softwareList.length === 0 && (
-            <tr><td colSpan={6} style={{ textAlign: 'center' }}>No software found.</td></tr>
-          )}
-          {softwareList.map((sw: Software) => (
-            <tr key={sw.id}>
-              <td>{sw.display_name}</td>
-              {/* Truncate description for display? */}
-              <td>{sw.description?.substring(0, 50)}{sw.description && sw.description.length > 50 ? '...' : ''}</td>
-              <td>{sw.software_type}</td>
-              <td>{sw.vendor}</td>
-              <td>{new Date(sw.created_at).toLocaleDateString()}</td>
-              <td>
-                <button onClick={() => handleViewDetails(sw)}>View Details</button>
-                <button onClick={() => handleEdit(sw)}>Edit</button>
-                <button onClick={() => handleDelete(sw.id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* Modal for Adding Software */}
-      {isModalOpen && (
-        <div className="modal-backdrop">
-          <div className="modal-content">
-            <h2>Add New Software</h2>
-             {/* Display error inside modal */} 
-             {error && <div className="error-message" style={{ marginBottom: '15px' }}>Error: {error}</div>} 
-            <form onSubmit={handleSubmit}>
-              {/* Updated form fields for CreateSoftwareRequest */} 
-              <div className="form-group">
-                <label htmlFor="display_name">Display Name *</label>
-                <input
-                  type="text"
-                  id="display_name"
-                  name="display_name"
-                  value={newSoftwareData.display_name}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="description">Description</label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={newSoftwareData.description}
-                  onChange={handleInputChange} // Need to cast e.target type correctly if using single handler
-                  rows={3}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="software_type">Software Type *</label>
-                <select
-                  id="software_type"
-                  name="software_type"
-                  value={newSoftwareData.software_type}
-                  onChange={handleInputChange}
-                  required
-                >
-                  {/* Options based on SoftwareType enum */}
-                  <option value="api">API</option>
-                  <option value="web">Web</option>
-                  <option value="mobile">Mobile</option>
-                  <option value="desktop">Desktop</option>
-                  <option value="embedded">Embedded</option>
-                  <option value="middleware">Middleware</option>
-                  <option value="library">Library</option>
-                </select>
-              </div>
-               <div className="form-group">
-                <label htmlFor="vendor">Vendor</label>
-                <input
-                  type="text"
-                  id="vendor"
-                  name="vendor"
-                  value={newSoftwareData.vendor}
-                  onChange={handleInputChange}
-                />
-              </div>
-               <div className="form-group">
-                <label htmlFor="manufacturer">Manufacturer</label>
-                <input
-                  type="text"
-                  id="manufacturer"
-                  name="manufacturer"
-                  value={newSoftwareData.manufacturer}
-                  onChange={handleInputChange}
-                />
-              </div>
-              {/* Add more form groups for other fields if needed */}
-              <div className="modal-actions">
-                 {/* Disable button while loading */}
-                <button type="submit" className="submit-button" disabled={isLoading}> {isLoading ? 'Adding...' : 'Add Software'}</button>
-                <button type="button" onClick={handleCloseModal} className="cancel-button" disabled={isLoading}>Cancel</button>
-              </div>
-            </form>
+    <div className="min-h-screen bg-base-200">
+      <div className="container mx-auto p-4">
+        {/* Header with breadcrumb */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-2 text-sm breadcrumbs">
+            <ul>
+              <li><a href="/">Overview</a></li>
+              <li>Application {selectedSoftware?.display_name || ''}</li>
+            </ul>
+          </div>
+          <div className="flex space-x-2">
+            <button className="btn btn-outline btn-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              </svg>
+              Export
+            </button>
+            <button className="btn btn-outline btn-sm" onClick={() => handleEdit(selectedSoftware!)}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+              </svg>
+              Edit
+            </button>
+            <button className="btn btn-outline btn-error btn-sm" onClick={() => handleDelete(selectedSoftware!.id)}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              Remove
+            </button>
           </div>
         </div>
-      )}
 
-      {/* Add Edit Modal */}
-      {isEditModalOpen && selectedSoftware && editSoftwareData && (
-        <div className="modal-backdrop">
-          <div className="modal-content">
-            <h2>Edit Software</h2>
-            {error && <div className="error-message" style={{ marginBottom: '15px' }}>Error: {error}</div>}
-            <form onSubmit={handleUpdate}>
-              <div className="form-group">
-                <label htmlFor="edit_display_name">Display Name *</label>
-                <input
-                  type="text"
-                  id="edit_display_name"
-                  name="display_name"
-                  value={editSoftwareData.display_name}
-                  onChange={(e) => setEditSoftwareData({...editSoftwareData, display_name: e.target.value})}
-                  required
-                />
+        {/* Main content grid */}
+        <div className="grid grid-cols-3 gap-6">
+          {/* Main content area - 2 columns */}
+          <div className="col-span-2">
+            {/* Software list with better styling */}
+            <div className="bg-base-100 rounded-lg shadow-lg">
+              <table className="table w-full">
+                <thead>
+                  <tr>
+                    <th>Display Name</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Last Updated</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {isLoading && !softwareList.length && (
+                    <tr>
+                      <td colSpan={5} className="text-center">
+                        <span className="loading loading-spinner loading-md"></span>
+                      </td>
+                    </tr>
+                  )}
+                  {!isLoading && error && !softwareList.length && (
+                    <tr>
+                      <td colSpan={5} className="text-center text-error">{error}</td>
+                    </tr>
+                  )}
+                  {!isLoading && !error && softwareList.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="text-center">No software found.</td>
+                    </tr>
+                  )}
+                  {softwareList.map((sw: Software) => (
+                    <tr key={sw.id} className="hover">
+                      <td>
+                        <div className="flex items-center space-x-3">
+                          <div className="avatar placeholder">
+                            <div className="bg-neutral text-neutral-content rounded-lg w-12">
+                              <span className="text-xl">{sw.display_name.charAt(0)}</span>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="font-bold">{sw.display_name}</div>
+                            <div className="text-sm opacity-50">{sw.vendor || 'No vendor'}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span className="badge badge-ghost">{sw.software_type}</span>
+                      </td>
+                      <td>
+                        <div className="flex flex-col">
+                          <span className={`badge ${sw.implementation_status === 'IN_USE' ? 'badge-success' : 'badge-warning'}`}>
+                            {sw.implementation_status || 'Unknown'}
+                          </span>
+                          <span className="text-xs opacity-50">{sw.lifecycle_status}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="flex flex-col">
+                          <span>{new Date(sw.updated_at).toLocaleDateString()}</span>
+                          <span className="text-xs opacity-50">
+                            {new Date(sw.updated_at).toLocaleTimeString()}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="flex space-x-1">
+                          <button 
+                            className="btn btn-ghost btn-xs"
+                            onClick={() => handleViewDetails(sw)}
+                          >
+                            View
+                          </button>
+                          <button 
+                            className="btn btn-ghost btn-xs"
+                            onClick={() => handleEdit(sw)}
+                          >
+                            Edit
+                          </button>
+                          <button 
+                            className="btn btn-ghost btn-error btn-xs"
+                            onClick={() => handleDelete(sw.id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Right sidebar - 1 column */}
+          <div className="col-span-1">
+            <div className="bg-base-100 rounded-lg shadow-lg p-4 space-y-4">
+              <h3 className="text-lg font-semibold">Quick Stats</h3>
+              <div className="stats stats-vertical shadow">
+                <div className="stat">
+                  <div className="stat-title">Total Applications</div>
+                  <div className="stat-value">{softwareList.length}</div>
+                </div>
+                <div className="stat">
+                  <div className="stat-title">Active</div>
+                  <div className="stat-value text-success">
+                    {softwareList.filter(sw => sw.implementation_status === 'IN_USE').length}
+                  </div>
+                </div>
               </div>
-              <div className="form-group">
-                <label htmlFor="edit_description">Description</label>
-                <textarea
-                  id="edit_description"
-                  name="description"
-                  value={editSoftwareData.description}
-                  onChange={(e) => setEditSoftwareData({...editSoftwareData, description: e.target.value})}
-                  rows={3}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="edit_software_type">Software Type *</label>
-                <select
-                  id="edit_software_type"
-                  name="software_type"
-                  value={editSoftwareData.software_type}
-                  onChange={(e) => setEditSoftwareData({...editSoftwareData, software_type: e.target.value})}
-                  required
-                >
-                  <option value="api">API</option>
-                  <option value="web">Web</option>
-                  <option value="mobile">Mobile</option>
-                  <option value="desktop">Desktop</option>
-                  <option value="embedded">Embedded</option>
-                  <option value="middleware">Middleware</option>
-                  <option value="library">Library</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label htmlFor="edit_vendor">Vendor</label>
-                <input
-                  type="text"
-                  id="edit_vendor"
-                  name="vendor"
-                  value={editSoftwareData.vendor}
-                  onChange={(e) => setEditSoftwareData({...editSoftwareData, vendor: e.target.value})}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="edit_manufacturer">Manufacturer</label>
-                <input
-                  type="text"
-                  id="edit_manufacturer"
-                  name="manufacturer"
-                  value={editSoftwareData.manufacturer}
-                  onChange={(e) => setEditSoftwareData({...editSoftwareData, manufacturer: e.target.value})}
-                />
-              </div>
-              <div className="modal-actions">
-                <button type="submit" className="submit-button" disabled={isLoading}>
-                  {isLoading ? 'Updating...' : 'Update Software'}
-                </button>
+            </div>
+          </div>
+        </div>
+
+        {/* View Details Modal with improved styling */}
+        {isModalOpen && selectedSoftware && !isEditModalOpen && (
+          <div className="modal modal-open">
+            <div className="modal-box w-11/12 max-w-5xl">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold">{selectedSoftware.display_name}</h2>
+                  <div className="rating rating-sm">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <input
+                        key={star}
+                        type="radio"
+                        name="rating-2"
+                        className="mask mask-star-2 bg-orange-400"
+                        checked={star === (selectedSoftware.rating || 0)}
+                        readOnly
+                      />
+                    ))}
+                  </div>
+                </div>
                 <button 
-                  type="button" 
+                  className="btn btn-sm btn-circle btn-ghost"
                   onClick={() => {
-                    setIsEditModalOpen(false);
+                    setIsModalOpen(false);
                     setSelectedSoftware(null);
-                    setEditSoftwareData(null);
-                  }} 
-                  className="cancel-button" 
-                  disabled={isLoading}
+                  }}
                 >
-                  Cancel
+                  ✕
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
 
-      {/* Add View Details Modal */}
-      {isModalOpen && selectedSoftware && !isEditModalOpen && (
-        <div className="modal-backdrop">
-          <div className="modal-content">
-            <h2>Software Details</h2>
-            <div className="software-details">
-              <p><strong>Display Name:</strong> {selectedSoftware.display_name}</p>
-              <p><strong>Description:</strong> {selectedSoftware.description || 'N/A'}</p>
-              <p><strong>Type:</strong> {selectedSoftware.software_type}</p>
-              <p><strong>Subtype:</strong> {selectedSoftware.software_subtype || 'N/A'}</p>
-              <p><strong>Vendor:</strong> {selectedSoftware.vendor || 'N/A'}</p>
-              <p><strong>Manufacturer:</strong> {selectedSoftware.manufacturer || 'N/A'}</p>
-              <p><strong>Install Type:</strong> {selectedSoftware.install_type || 'N/A'}</p>
-              <p><strong>Product Type:</strong> {selectedSoftware.product_type || 'N/A'}</p>
-              <p><strong>Context:</strong> {selectedSoftware.context || 'N/A'}</p>
-              <p><strong>Lifecycle Status:</strong> {selectedSoftware.lifecycle_status || 'N/A'}</p>
-              <p><strong>Implementation Status:</strong> {selectedSoftware.implementation_status || 'N/A'}</p>
-              <p><strong>Created At:</strong> {new Date(selectedSoftware.created_at).toLocaleString()}</p>
-              <p><strong>Updated At:</strong> {new Date(selectedSoftware.updated_at).toLocaleString()}</p>
-            </div>
-            <div className="modal-actions">
-              <button 
-                type="button" 
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setSelectedSoftware(null);
-                }} 
-                className="cancel-button"
-              >
-                Close
-              </button>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <div className="badge badge-lg">{selectedSoftware.implementation_status}</div>
+                    <div className="badge badge-lg badge-outline">{selectedSoftware.lifecycle_status}</div>
+                    <div className="badge badge-lg badge-ghost">{selectedSoftware.software_type}</div>
+                  </div>
+
+                  <div className="prose">
+                    <h3>Description</h3>
+                    <p>{selectedSoftware.description || 'No description available.'}</p>
+                  </div>
+
+                  <div className="divider"></div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-semibold mb-2">Details</h4>
+                      <ul className="space-y-2">
+                        <li><span className="opacity-70">Vendor:</span> {selectedSoftware.vendor || 'N/A'}</li>
+                        <li><span className="opacity-70">Manufacturer:</span> {selectedSoftware.manufacturer || 'N/A'}</li>
+                        <li><span className="opacity-70">Install Type:</span> {selectedSoftware.install_type || 'N/A'}</li>
+                        <li><span className="opacity-70">Product Type:</span> {selectedSoftware.product_type || 'N/A'}</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-2">Dates</h4>
+                      <ul className="space-y-2">
+                        <li>
+                          <span className="opacity-70">Created:</span>
+                          {new Date(selectedSoftware.created_at).toLocaleDateString()}
+                        </li>
+                        <li>
+                          <span className="opacity-70">Last Updated:</span>
+                          {new Date(selectedSoftware.updated_at).toLocaleDateString()}
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-l pl-6">
+                  <h3 className="font-semibold mb-4">Screenshots</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {[1, 2, 3, 4].map((n) => (
+                      <div key={n} className="aspect-video bg-base-200 rounded-lg flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Edit Modal with improved styling */}
+        {isEditModalOpen && selectedSoftware && editSoftwareData && (
+          <div className="modal modal-open">
+            <div className="modal-box w-11/12 max-w-5xl">
+              <h2 className="text-2xl font-bold mb-6">Edit Software</h2>
+              {error && <div className="alert alert-error mb-4">{error}</div>}
+              <form onSubmit={handleUpdate} className="space-y-4">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Display Name *</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="input input-bordered"
+                      value={editSoftwareData.display_name}
+                      onChange={(e) => setEditSoftwareData({...editSoftwareData, display_name: e.target.value})}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Software Type *</span>
+                    </label>
+                    <select
+                      className="select select-bordered"
+                      value={editSoftwareData.software_type}
+                      onChange={(e) => setEditSoftwareData({...editSoftwareData, software_type: e.target.value})}
+                      required
+                    >
+                      <option value="api">API</option>
+                      <option value="web">Web</option>
+                      <option value="mobile">Mobile</option>
+                      <option value="desktop">Desktop</option>
+                      <option value="embedded">Embedded</option>
+                      <option value="middleware">Middleware</option>
+                      <option value="library">Library</option>
+                    </select>
+                  </div>
+
+                  <div className="form-control col-span-2">
+                    <label className="label">
+                      <span className="label-text">Description</span>
+                    </label>
+                    <textarea
+                      className="textarea textarea-bordered h-24"
+                      value={editSoftwareData.description}
+                      onChange={(e) => setEditSoftwareData({...editSoftwareData, description: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Vendor</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="input input-bordered"
+                      value={editSoftwareData.vendor}
+                      onChange={(e) => setEditSoftwareData({...editSoftwareData, vendor: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Manufacturer</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="input input-bordered"
+                      value={editSoftwareData.manufacturer}
+                      onChange={(e) => setEditSoftwareData({...editSoftwareData, manufacturer: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className="modal-action">
+                  <button type="submit" className="btn btn-primary" disabled={isLoading}>
+                    {isLoading ? <span className="loading loading-spinner"></span> : 'Update Software'}
+                  </button>
+                  <button 
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => {
+                      setIsEditModalOpen(false);
+                      setSelectedSoftware(null);
+                      setEditSoftwareData(null);
+                    }}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

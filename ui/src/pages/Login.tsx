@@ -1,16 +1,5 @@
 import { useState } from 'react';
-import { 
-  Box, 
-  Container, 
-  TextField, 
-  Button, 
-  Typography, 
-  Paper,
-  Alert,
-  Link,
-  Stack
-} from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { login } from '../api/auth';
 
 const Login = () => {
@@ -37,106 +26,86 @@ const Login = () => {
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          <Typography component="h1" variant="h4" sx={{ mb: 3, fontWeight: 'bold' }}>
-            Welcome Back
-          </Typography>
+    <div className="min-h-screen bg-base-200 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div className="bg-base-100 shadow-xl rounded-lg p-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-base-content mb-6">
+              Welcome Back
+            </h2>
+          </div>
           
           {error && (
-            <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
-              {error}
-            </Alert>
+            <div className="alert alert-error mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{error}</span>
+            </div>
           )}
           
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
-              autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              sx={{ mb: 2 }}
-              disabled={isLoading}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type="password"
-              id="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              sx={{ mb: 2 }}
-              disabled={isLoading}
-            />
-            <Button
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Email Address</span>
+              </label>
+              <input
+                type="email"
+                required
+                className="input input-bordered w-full"
+                id="email"
+                name="email"
+                autoComplete="email"
+                autoFocus
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Password</span>
+              </label>
+              <input
+                type="password"
+                required
+                className="input input-bordered w-full"
+                name="password"
+                id="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+
+            <button
               type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ 
-                mt: 3, 
-                mb: 2,
-                py: 1.5,
-                fontSize: '1.1rem',
-                textTransform: 'none'
-              }}
+              className={`btn btn-primary w-full ${isLoading ? 'loading' : ''}`}
               disabled={isLoading}
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
-            </Button>
+            </button>
             
-            <Stack direction="row" justifyContent="space-between" sx={{ mt: 2 }}>
+            <div className="flex justify-between text-sm">
               <Link 
-                href="/forgot-password" 
-                variant="body2"
-                sx={{ 
-                  textDecoration: 'none',
-                  '&:hover': { textDecoration: 'underline' }
-                }}
+                to="/forgot-password" 
+                className="link link-hover"
               >
                 Forgot password?
               </Link>
               <Link 
-                href="/register" 
-                variant="body2"
-                sx={{ 
-                  textDecoration: 'none',
-                  '&:hover': { textDecoration: 'underline' }
-                }}
+                to="/register" 
+                className="link link-hover"
               >
                 Create account
               </Link>
-            </Stack>
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 };
 
