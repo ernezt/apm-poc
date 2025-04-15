@@ -30,7 +30,7 @@ const Login: React.FC = () => {
         {/* Left side - Login form */}
         <div className="flex-1 p-8">
           <div className="mb-8">
-            <Logo className="h-12 w-12 mb-4" />
+            <Logo className="h-16" />
             <h1 className="text-2xl font-bold mb-2">Sign in</h1>
           </div>
 

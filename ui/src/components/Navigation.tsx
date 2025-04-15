@@ -10,6 +10,7 @@ import {
   FiChevronDown,
   FiChevronUp
 } from 'react-icons/fi';
+import Logo from './Logo';
 
 interface NavItemProps {
   icon: IconType;
@@ -71,8 +72,8 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, to, items }) => {
 const Navigation: React.FC = () => {
   return (
     <nav className="w-64 bg-base-100 border-r border-base-200 h-screen p-4">
-      <div className="mb-8">
-        <img src="/logo.png" alt="Logo" className="h-8 mx-auto" />
+      <div className="mb-8 w-48 mx-auto">
+        <Logo className="h-12" />
       </div>
 
       <div className="space-y-4">
