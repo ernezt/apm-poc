@@ -46,6 +46,9 @@ const ApplicationOverview: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState(false); // Add loading state
   const [error, setError] = useState<string | null>(null); // Add error state
+  const [selectedSoftware, setSelectedSoftware] = useState<Software | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editSoftwareData, setEditSoftwareData] = useState<NewSoftwareData | null>(null);
 
   // Fetch software from the backend when the component mounts
   useEffect(() => {
@@ -131,6 +134,99 @@ const ApplicationOverview: React.FC = () => {
     }
   };
 
+  // Handler for viewing software details
+  const handleViewDetails = (software: Software) => {
+    setSelectedSoftware(software);
+    setIsModalOpen(true);
+  };
+
+  // Handler for editing software
+  const handleEdit = (software: Software) => {
+    setSelectedSoftware(software);
+    setEditSoftwareData({
+      display_name: software.display_name,
+      description: software.description || '',
+      software_type: software.software_type,
+      vendor: software.vendor || '',
+      manufacturer: software.manufacturer || '',
+    });
+    setIsEditModalOpen(true);
+  };
+
+  // Handler for deleting software
+  const handleDelete = async (softwareId: string) => {
+    if (!window.confirm('Are you sure you want to delete this software?')) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/v1/software/${softwareId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Remove the deleted software from the list
+      setSoftwareList(prevList => prevList.filter(sw => sw.id !== softwareId));
+    } catch (e) {
+      console.error("Failed to delete software:", e);
+      setError(e instanceof Error ? e.message : 'An unknown error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handler for updating software
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSoftware || !editSoftwareData) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/v1/software/${selectedSoftware.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editSoftwareData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // For 204 No Content, we don't need to parse JSON
+      if (response.status === 204) {
+        // Update the local state with the edited data
+        setSoftwareList(prevList => 
+          prevList.map(sw => sw.id === selectedSoftware.id ? {
+            ...sw,
+            ...editSoftwareData,
+            updated_at: new Date().toISOString()
+          } : sw)
+        );
+        setIsEditModalOpen(false);
+        setSelectedSoftware(null);
+        setEditSoftwareData(null);
+        return;
+      }
+
+      // If we get here, there was an unexpected response
+      throw new Error('Unexpected response from server');
+    } catch (e) {
+      console.error("Failed to update software:", e);
+      setError(e instanceof Error ? e.message : 'An unknown error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="application-overview-container">
        {/* Optional: Display loading indicator */} 
@@ -174,10 +270,9 @@ const ApplicationOverview: React.FC = () => {
               <td>{sw.vendor}</td>
               <td>{new Date(sw.created_at).toLocaleDateString()}</td>
               <td>
-                {/* Add relevant actions for software */}
-                <button>View Details</button>
-                <button>Edit</button>
-                <button>Delete</button> {/* Add Delete action */} 
+                <button onClick={() => handleViewDetails(sw)}>View Details</button>
+                <button onClick={() => handleEdit(sw)}>Edit</button>
+                <button onClick={() => handleDelete(sw.id)}>Delete</button>
               </td>
             </tr>
           ))}
@@ -260,6 +355,130 @@ const ApplicationOverview: React.FC = () => {
                 <button type="button" onClick={handleCloseModal} className="cancel-button" disabled={isLoading}>Cancel</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Edit Modal */}
+      {isEditModalOpen && selectedSoftware && editSoftwareData && (
+        <div className="modal-backdrop">
+          <div className="modal-content">
+            <h2>Edit Software</h2>
+            {error && <div className="error-message" style={{ marginBottom: '15px' }}>Error: {error}</div>}
+            <form onSubmit={handleUpdate}>
+              <div className="form-group">
+                <label htmlFor="edit_display_name">Display Name *</label>
+                <input
+                  type="text"
+                  id="edit_display_name"
+                  name="display_name"
+                  value={editSoftwareData.display_name}
+                  onChange={(e) => setEditSoftwareData({...editSoftwareData, display_name: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="edit_description">Description</label>
+                <textarea
+                  id="edit_description"
+                  name="description"
+                  value={editSoftwareData.description}
+                  onChange={(e) => setEditSoftwareData({...editSoftwareData, description: e.target.value})}
+                  rows={3}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="edit_software_type">Software Type *</label>
+                <select
+                  id="edit_software_type"
+                  name="software_type"
+                  value={editSoftwareData.software_type}
+                  onChange={(e) => setEditSoftwareData({...editSoftwareData, software_type: e.target.value})}
+                  required
+                >
+                  <option value="api">API</option>
+                  <option value="web">Web</option>
+                  <option value="mobile">Mobile</option>
+                  <option value="desktop">Desktop</option>
+                  <option value="embedded">Embedded</option>
+                  <option value="middleware">Middleware</option>
+                  <option value="library">Library</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="edit_vendor">Vendor</label>
+                <input
+                  type="text"
+                  id="edit_vendor"
+                  name="vendor"
+                  value={editSoftwareData.vendor}
+                  onChange={(e) => setEditSoftwareData({...editSoftwareData, vendor: e.target.value})}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="edit_manufacturer">Manufacturer</label>
+                <input
+                  type="text"
+                  id="edit_manufacturer"
+                  name="manufacturer"
+                  value={editSoftwareData.manufacturer}
+                  onChange={(e) => setEditSoftwareData({...editSoftwareData, manufacturer: e.target.value})}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="submit" className="submit-button" disabled={isLoading}>
+                  {isLoading ? 'Updating...' : 'Update Software'}
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setSelectedSoftware(null);
+                    setEditSoftwareData(null);
+                  }} 
+                  className="cancel-button" 
+                  disabled={isLoading}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add View Details Modal */}
+      {isModalOpen && selectedSoftware && !isEditModalOpen && (
+        <div className="modal-backdrop">
+          <div className="modal-content">
+            <h2>Software Details</h2>
+            <div className="software-details">
+              <p><strong>Display Name:</strong> {selectedSoftware.display_name}</p>
+              <p><strong>Description:</strong> {selectedSoftware.description || 'N/A'}</p>
+              <p><strong>Type:</strong> {selectedSoftware.software_type}</p>
+              <p><strong>Subtype:</strong> {selectedSoftware.software_subtype || 'N/A'}</p>
+              <p><strong>Vendor:</strong> {selectedSoftware.vendor || 'N/A'}</p>
+              <p><strong>Manufacturer:</strong> {selectedSoftware.manufacturer || 'N/A'}</p>
+              <p><strong>Install Type:</strong> {selectedSoftware.install_type || 'N/A'}</p>
+              <p><strong>Product Type:</strong> {selectedSoftware.product_type || 'N/A'}</p>
+              <p><strong>Context:</strong> {selectedSoftware.context || 'N/A'}</p>
+              <p><strong>Lifecycle Status:</strong> {selectedSoftware.lifecycle_status || 'N/A'}</p>
+              <p><strong>Implementation Status:</strong> {selectedSoftware.implementation_status || 'N/A'}</p>
+              <p><strong>Created At:</strong> {new Date(selectedSoftware.created_at).toLocaleString()}</p>
+              <p><strong>Updated At:</strong> {new Date(selectedSoftware.updated_at).toLocaleString()}</p>
+            </div>
+            <div className="modal-actions">
+              <button 
+                type="button" 
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setSelectedSoftware(null);
+                }} 
+                className="cancel-button"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
